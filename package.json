@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-css-inject-manifest",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Vite plugin for automatically injecting CSS files into Chrome Extension manifest.json",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
