@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-css-inject-manifest",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A Vite plugin for automatically injecting CSS files into Chrome Extension manifest.json",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -31,18 +31,18 @@
     "build"
   ],
   "author": {
-    "name": "seascross_cj_v3",
-    "email": "your-email@example.com"
+    "name": "lizongxiao",
+    "email": "lizongxiao@gmail.com"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/vite-plugin-css-inject-manifest.git"
+    "url": "git+https://github.com/lizongxiao/vite-plugin-css-inject-manifest.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/vite-plugin-css-inject-manifest/issues"
+    "url": "https://github.com/lizongxiao/vite-plugin-css-inject-manifest/issues"
   },
-  "homepage": "https://github.com/your-username/vite-plugin-css-inject-manifest#readme",
+  "homepage": "https://github.com/lizongxiao",
   "peerDependencies": {
     "vite": "^4.0.0 || ^5.0.0"
   },
