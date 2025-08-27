@@ -1,0 +1,58 @@
+{
+  "name": "vite-plugin-css-inject-manifest",
+  "version": "1.0.0",
+  "description": "A Vite plugin for automatically injecting CSS files into Chrome Extension manifest.json",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "vite",
+    "plugin",
+    "chrome-extension",
+    "manifest",
+    "css",
+    "inject",
+    "build"
+  ],
+  "author": {
+    "name": "seascross_cj_v3",
+    "email": "your-email@example.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/vite-plugin-css-inject-manifest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/vite-plugin-css-inject-manifest/issues"
+  },
+  "homepage": "https://github.com/your-username/vite-plugin-css-inject-manifest#readme",
+  "peerDependencies": {
+    "vite": "^4.0.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
