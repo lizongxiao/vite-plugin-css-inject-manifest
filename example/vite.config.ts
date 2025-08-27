@@ -6,7 +6,7 @@ export default defineConfig({
     cssInjectPlugin({
       debug: true,
       cssPattern: /\.css$/,
-      targetScripts: ['content-scripts']
+      targetScripts: ['content']
     })
   ],
   build: {
