@@ -1,6 +1,6 @@
 import type { Plugin } from "vite";
 
-export interface CssInjectPluginOptions {
+export interface ManifestBuilderPluginOptions {
   /** 是否启用调试日志 */
   debug?: boolean;
   /** 自定义 CSS 文件匹配规则 */
@@ -13,6 +13,8 @@ export interface CssInjectPluginOptions {
   manifestName?: string;
   /** manifest.json 源文件路径，默认为项目根目录的 manifest.json */
   manifestSource?: string;
+  /** 要替换的 manifest 字段，支持嵌套对象 */
+  manifestOverrides?: Record<string, any>;
 }
 
 /**
@@ -37,7 +39,7 @@ export interface CssInjectPluginOptions {
  * })
  * ```
  */
-export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
+export function manifestBuilderPlugin(options: ManifestBuilderPluginOptions = {}): Plugin {
   const {
     debug = false,
     cssPattern = /\.css$/,
@@ -45,10 +47,11 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
     outDir = "dist",
     manifestName = "manifest.json",
     manifestSource = "manifest.json",
+    manifestOverrides = {},
   } = options;
 
   return {
-    name: "vite-plugin-css-inject-manifest",
+    name: "vite-plugin-manifest-builder",
     enforce: "post",
     async closeBundle() {
       const fs = await import("fs");
@@ -62,14 +65,14 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
           if (fs.default.existsSync(manifestSource)) {
             if (debug) {
               console.log(
-                `[vite-plugin-css-inject-manifest] 复制 manifest.json 从 ${manifestSource} 到 ${manifestPath}`
+                `[vite-plugin-manifest-builder] 复制 manifest.json 从 ${manifestSource} 到 ${manifestPath}`
               );
             }
             fs.default.copyFileSync(manifestSource, manifestPath);
           } else {
             if (debug) {
               console.log(
-                `[vite-plugin-css-inject-manifest] manifest.json 不存在: ${manifestPath}`
+                `[vite-plugin-manifest-builder] manifest.json 不存在: ${manifestPath}`
               );
             }
             return;
@@ -79,6 +82,37 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
         // 读取 manifest.json
         const manifestContent = fs.default.readFileSync(manifestPath, "utf-8");
         const manifest = JSON.parse(manifestContent);
+
+        // 应用 manifest 字段替换
+        if (Object.keys(manifestOverrides).length > 0) {
+          if (debug) {
+            console.log(
+              `[vite-plugin-manifest-builder] 应用 manifest 字段替换:`,
+              manifestOverrides
+            );
+          }
+          
+          // 递归合并对象
+          function deepMerge(target: any, source: any): any {
+            for (const key in source) {
+              if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                if (!target[key]) target[key] = {};
+                deepMerge(target[key], source[key]);
+              } else {
+                target[key] = source[key];
+              }
+            }
+            return target;
+          }
+          
+          deepMerge(manifest, manifestOverrides);
+          
+          if (debug) {
+            console.log(
+              `[vite-plugin-manifest-builder] manifest 字段替换完成`
+            );
+          }
+        }
 
         // 查找 CSS 文件
         const cssFiles: string[] = [];
@@ -105,24 +139,24 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
 
         if (debug) {
           console.log(
-            `[vite-plugin-css-inject-manifest] 找到 ${cssFiles.length} 个 CSS 文件:`,
+            `[vite-plugin-manifest-builder] 找到 ${cssFiles.length} 个 CSS 文件:`,
             cssFiles
           );
-          console.log(`[vite-plugin-css-inject-manifest] 输出目录: ${outDir}`);
+          console.log(`[vite-plugin-manifest-builder] 输出目录: ${outDir}`);
           console.log(
-            `[vite-plugin-css-inject-manifest] manifest 路径: ${manifestPath}`
+            `[vite-plugin-manifest-builder] manifest 路径: ${manifestPath}`
           );
         }
 
         // 将 CSS 文件注入到 content_scripts 中
         if (debug) {
           console.log(
-            `[vite-plugin-css-inject-manifest] content_scripts 数量: ${
+            `[vite-plugin-manifest-builder] content_scripts 数量: ${
               manifest.content_scripts?.length || 0
             }`
           );
           console.log(
-            `[vite-plugin-css-inject-manifest] CSS 文件数量: ${cssFiles.length}`
+            `[vite-plugin-manifest-builder] CSS 文件数量: ${cssFiles.length}`
           );
         }
 
@@ -139,7 +173,7 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
               if (!isTarget) {
                 if (debug) {
                   console.log(
-                    `[vite-plugin-css-inject-manifest] 跳过非目标脚本:`,
+                    `[vite-plugin-manifest-builder] 跳过非目标脚本:`,
                     scriptFiles
                   );
                 }
@@ -171,19 +205,19 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
 
           if (debug) {
             console.log(
-              `[vite-plugin-css-inject-manifest] 成功注入 ${injectedCount} 个 CSS 文件到 manifest.json`
+              `[vite-plugin-manifest-builder] 成功注入 ${injectedCount} 个 CSS 文件到 manifest.json`
             );
           }
         } else {
           if (debug) {
             console.log(
-              "[vite-plugin-css-inject-manifest] 未找到 content_scripts 或 CSS 文件"
+              "[vite-plugin-manifest-builder] 未找到 content_scripts 或 CSS 文件"
             );
           }
         }
       } catch (error) {
         console.error(
-          "[vite-plugin-css-inject-manifest] 处理 manifest.json 时发生错误:",
+          "[vite-plugin-manifest-builder] 处理 manifest.json 时发生错误:",
           error
         );
       }
@@ -192,4 +226,4 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
 }
 
 // 默认导出
-export default cssInjectPlugin;
+export default manifestBuilderPlugin;

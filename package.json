@@ -1,7 +1,7 @@
 {
-  "name": "vite-plugin-css-inject-manifest",
-  "version": "1.0.3",
-  "description": "A Vite plugin for automatically injecting CSS files into Chrome Extension manifest.json",
+  "name": "vite-plugin-manifest-builder",
+  "version": "1.0.0",
+  "description": "A Vite plugin for dynamically building and modifying Chrome Extension manifest.json with CSS injection and field overrides",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -19,7 +19,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "node test-quick.js",
+    "test:full": "node test-all-features.js"
   },
   "keywords": [
     "vite",
@@ -28,7 +30,10 @@
     "manifest",
     "css",
     "inject",
-    "build"
+    "build",
+    "builder",
+    "transformer",
+    "dynamic"
   ],
   "author": {
     "name": "lizongxiao",
@@ -37,10 +42,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lizongxiao/vite-plugin-css-inject-manifest.git"
+    "url": "git+https://github.com/lizongxiao/vite-plugin-manifest-builder.git"
   },
   "bugs": {
-    "url": "https://github.com/lizongxiao/vite-plugin-css-inject-manifest/issues"
+    "url": "https://github.com/lizongxiao/vite-plugin-manifest-builder/issues"
   },
   "homepage": "https://github.com/lizongxiao",
   "peerDependencies": {
