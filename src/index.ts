@@ -11,6 +11,8 @@ export interface CssInjectPluginOptions {
   outDir?: string
   /** manifest.json 文件名，默认为 'manifest.json' */
   manifestName?: string
+  /** manifest.json 源文件路径，默认为项目根目录的 manifest.json */
+  manifestSource?: string
 }
 
 /**
@@ -41,60 +43,88 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
     cssPattern = /\.css$/,
     targetScripts = [],
     outDir = 'dist',
-    manifestName = 'manifest.json'
+    manifestName = 'manifest.json',
+    manifestSource = 'manifest.json'
   } = options
 
   return {
     name: 'vite-plugin-css-inject-manifest',
     enforce: 'post',
-    closeBundle() {
-      const fs = require('fs')
-      const path = require('path')
+    async closeBundle() {
+      const fs = await import('fs')
+      const path = await import('path')
       
-      const manifestPath = path.join(outDir, manifestName)
+      const manifestPath = path.default.join(outDir, manifestName)
       
       try {
-        // 检查 manifest.json 是否存在
-        if (!fs.existsSync(manifestPath)) {
-          if (debug) {
-            console.log(`[vite-plugin-css-inject-manifest] manifest.json 不存在: ${manifestPath}`)
+        // 如果目标manifest不存在，尝试从源文件复制
+        if (!fs.default.existsSync(manifestPath)) {
+          if (fs.default.existsSync(manifestSource)) {
+            if (debug) {
+              console.log(`[vite-plugin-css-inject-manifest] 复制 manifest.json 从 ${manifestSource} 到 ${manifestPath}`)
+            }
+            fs.default.copyFileSync(manifestSource, manifestPath)
+          } else {
+            if (debug) {
+              console.log(`[vite-plugin-css-inject-manifest] manifest.json 不存在: ${manifestPath}`)
+            }
+            return
           }
-          return
         }
 
         // 读取 manifest.json
-        const manifestContent = fs.readFileSync(manifestPath, 'utf-8')
+        const manifestContent = fs.default.readFileSync(manifestPath, 'utf-8')
         const manifest = JSON.parse(manifestContent)
         
         // 查找 CSS 文件
         const cssFiles: string[] = []
-        const cssDir = path.join(outDir, 'css')
         
-        if (fs.existsSync(cssDir)) {
-          const files = fs.readdirSync(cssDir)
+        // 递归查找所有CSS文件
+        function findCssFiles(dir: string, baseDir: string = ''): void {
+          if (!fs.default.existsSync(dir)) return
+          
+          const files = fs.default.readdirSync(dir)
           files.forEach((file: string) => {
-            if (cssPattern.test(file)) {
-              cssFiles.push(`css/${file}`)
+            const filePath = path.default.join(dir, file)
+            const relativePath = path.default.join(baseDir, file)
+            const stat = fs.default.statSync(filePath)
+            
+            if (stat.isDirectory()) {
+              findCssFiles(filePath, relativePath)
+            } else if (cssPattern.test(file)) {
+              cssFiles.push(relativePath.replace(/\\/g, '/'))
             }
           })
         }
+        
+        findCssFiles(outDir)
 
         if (debug) {
           console.log(`[vite-plugin-css-inject-manifest] 找到 ${cssFiles.length} 个 CSS 文件:`, cssFiles)
+          console.log(`[vite-plugin-css-inject-manifest] 输出目录: ${outDir}`)
+          console.log(`[vite-plugin-css-inject-manifest] manifest 路径: ${manifestPath}`)
         }
 
         // 将 CSS 文件注入到 content_scripts 中
+        if (debug) {
+          console.log(`[vite-plugin-css-inject-manifest] content_scripts 数量: ${manifest.content_scripts?.length || 0}`)
+          console.log(`[vite-plugin-css-inject-manifest] CSS 文件数量: ${cssFiles.length}`)
+        }
+        
         if (manifest.content_scripts && cssFiles.length > 0) {
           let injectedCount = 0
 
           manifest.content_scripts.forEach((script: any, index: number) => {
             // 检查是否为目标脚本
             if (targetScripts.length > 0) {
-              const scriptName = script.js?.[0] || `script-${index}`
-              const isTarget = targetScripts.some(target => 
-                scriptName.includes(target)
+              const scriptFiles = script.js || []
+              const isTarget = scriptFiles.some((scriptFile: string) => 
+                targetScripts.some(target => scriptFile.includes(target))
               )
               if (!isTarget) {
+                if (debug) {
+                  console.log(`[vite-plugin-css-inject-manifest] 跳过非目标脚本:`, scriptFiles)
+                }
                 return
               }
             }
@@ -116,7 +146,7 @@ export function cssInjectPlugin(options: CssInjectPluginOptions = {}): Plugin {
           })
 
           // 写回 manifest.json
-          fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
+          fs.default.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
           
           if (debug) {
             console.log(`[vite-plugin-css-inject-manifest] 成功注入 ${injectedCount} 个 CSS 文件到 manifest.json`)
